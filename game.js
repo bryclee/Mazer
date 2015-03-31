@@ -1,7 +1,7 @@
 window.settings = {
   height: 20,
   width: 20,
-  sizeOfBlock: 20,
+  sizeOfBlock: 10,
 }
 var svg;
 
@@ -21,8 +21,7 @@ var pxl = function(num){
 var renderMap = function(layout) {
   var rects = d3.select('svg').selectAll('rect').data(layout)
 
-  rects.transition()
-    .style('fill', function(d) { return colorCodes[d]; })
+  rects.style('fill', function(d) { return colorCodes[d]; })
 
   rects.enter().append('rect')
     .attr({

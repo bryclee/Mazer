@@ -1,8 +1,11 @@
-//makeMap
-  //nodes
-  //generate paths
-  //check collision
-//player
+var makeMap = function(height, width) {
+  this.height = height;
+  this.width = width;
+  this.layoutBF = createArray(height * width, 'Empty');
+  this.layoutDF = createArray(height * width, 'Empty');
+  this.seed = Math.floor(Math.random() * height * width);
+};
+
 var randNum = function(param) {
   return Math.floor(Math.random() * param);
 }
@@ -14,14 +17,6 @@ var createArray = function(size, fill) {
   }
   return result;
 }
-
-var makeMap = function(height, width) {
-  this.height = height;
-  this.width = width;
-  this.layoutBF = createArray(height * width, 'Empty');
-  this.layoutDF = createArray(height * width, 'Empty');
-  this.seed = Math.floor(Math.random() * height * width);
-};
 
 makeMap.prototype.surrounding = function(idx){
   var res = [];
@@ -40,46 +35,45 @@ makeMap.prototype.surrounding = function(idx){
 };
 
 makeMap.prototype.BFgenerate = function(cb) {
+  //generate a map using BF approach
   var edges = [];
   var layout = this.layoutBF;
   layout[this.seed] = 'Path';
+  var self = this;
 
   //generate surrounding edges of seed
-  edges = this.surrounding(this.seed);
+  edges = self.surrounding(self.seed);
 
   for (var i = 0; i < edges.length; i++) {
     layout[edges[i]] = "Edge";
   }
-  while (edges.length > 0) {
-  //edges = each unused edge
-  //while there are unused edges
-    //fill in one randomly
-    //add in all unused edges around it
+    //check if there are two surrounding paths to an edge
+  var updateMap = function(){
     var pick = randNum(edges.length);
     var pick = edges.splice(pick, 1)[0];
-    var nextTo = this.surrounding(pick);
-    //if two paths next to the edge
+    var nextTo = self.surrounding(pick);
     if (_.reduce(nextTo, function(a,b) { 
-      if (layout[b] === 'Path')
-        a++;
-      return a;
+      return (layout[b] === 'Path' ? a+1 : a);
     }, 0) > 1) {
-      //set to a wall
+      //if yes, declare it as a wall
       layout[pick] = 'Wall';
     } else {
-      //else set as a path, add its edges
+      //otherwise, declare as a path and add it's edges
       layout[pick] = 'Path';
-      nextTo = _.filter(nextTo, function(a) {
-        return layout[a] === 'Empty';
-      });
       nextTo.forEach(function(i){
-        layout[i] = 'Edge';
+        if (layout[i] === 'Empty') {
+          layout[i] = 'Edge';
+          edges.push(i);
+        }
       });
-      edges = edges.concat(nextTo);
     }
-
     cb(layout);
+    if (edges.length) {
+      setTimeout(updateMap, 0);
+    }
   }
+  
+  updateMap();
 };
 
 makeMap.prototype.DFgenerate = function() {
